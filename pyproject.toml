@@ -25,6 +25,7 @@ readme = "README.md"
 requires-python = ">=3.10"
 
 dependencies = [
+    "lz4",
     "numpy",
     "pandas",
     "pillow",
@@ -47,6 +48,7 @@ dev = [
     "pytest",
     "ruff == 0.14.11", # sync with .pre-commit-config.yaml
     "lerobot == 0.3.3",
+    "robot-eval-logger @ git+https://github.com/zhouzypaul/robot_eval_logger",
 ]
 
 [tool.setuptools]

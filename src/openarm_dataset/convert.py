@@ -36,11 +36,11 @@ def main():
         "--format",
         help="Format of the output dataset (default: openarm)",
         default="openarm",
-        choices=["openarm", "lerobot_v2.1"],
+        choices=["openarm", "lerobot_v2.1", "eval_logger"],
     )
     parser.add_argument(
         "--fps",
-        help="Frames per second for the output dataset (default: 30) if the output format is lerobot_v2.1",
+        help="Frames per second for the output dataset (default: 30) if the output format is lerobot_v2.1 or eval_logger",
         type=int,
         default=30,
     )
@@ -62,6 +62,18 @@ def main():
         action="store_true",
         default=False,
     )
+    parser.add_argument(
+        "--control-mode",
+        help="Robot control mode if the output format is eval_logger (default: joint_position)",
+        choices=("joint_velocity", "joint_position", "end_effector"),
+        default="joint_position",
+    )
+    parser.add_argument(
+        "--arm",
+        help="Which arm to export if the output format is eval_logger (required; robot_eval_logger is single-arm only, so the other arm is dropped)",
+        choices=("left", "right"),
+        default=None,
+    )
 
     args = parser.parse_args()
     write_kwargs = {"format": args.format}
@@ -70,6 +82,12 @@ def main():
         write_kwargs["smoothing_cutoff"] = args.smoothing_cutoff
         write_kwargs["train_split"] = args.train_split
         write_kwargs["success_only"] = args.success_only
+    elif args.format == "eval_logger":
+        if args.arm is None:
+            parser.error("--format eval_logger requires --arm {left,right}")
+        write_kwargs["fps"] = args.fps
+        write_kwargs["control_mode"] = args.control_mode
+        write_kwargs["arm"] = args.arm
 
     old_dataset = openarm_dataset.Dataset(args.input)
     old_dataset.write(args.output, **write_kwargs)

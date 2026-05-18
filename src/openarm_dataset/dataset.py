@@ -410,6 +410,10 @@ class Dataset:
             from .lerobot_v21 import to_lerobotv21
 
             return to_lerobotv21(self, output, **options)
+        elif format == "eval_logger":
+            from .eval_logger import to_eval_logger
+
+            return to_eval_logger(self, output, **options)
         else:
             raise ValueError(f"Unsupported format: {format}")
 

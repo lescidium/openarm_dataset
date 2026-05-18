@@ -63,8 +63,13 @@ dict_keys(['left_wrist', 'right_wrist', 'ceiling', 'head'])
 3
 >>> cam_head.load_timestamps()
 [1772010251.6187909, 1772010251.629775, 1772010251.6634612]
->>> cam_head.load_frame(0)
-(1772010251.6187909, array([[[ 75, 144,  90],
+>>> frame = cam_head.get_frame(0)
+>>> frame.timestamp
+1772010251.6187909
+>>> frame.path
+PosixPath('.../1772010251618790928.jpeg')
+>>> frame.load()
+array([[[ 75, 144,  90],
         [133, 216, 128],
         ...,
         [132,  54, 199]],
@@ -74,11 +79,11 @@ dict_keys(['left_wrist', 'right_wrist', 'ceiling', 'head'])
        [[ 90, 146, 117],
         [ 98, 134, 122],
         ...,
-        [ 89, 162, 155]]], shape=(600, 960, 3), dtype=uint8))
->>> cam_head.iter_frames()
-<generator object CameraData.iter_frames at 0x72a24b36fe60>
->>> cam_head.iter_files()
-<generator object CameraData.iter_files at 0x72a24b0289e0>
+        [ 89, 162, 155]]], shape=(600, 960, 3), dtype=uint8)
+>>> cam_head.frames()
+<generator object Camera.frames at 0x72a24b36fe60>
+>>> cam_head.all_files
+[PosixPath('.../1772010251618790928.jpeg'), PosixPath('.../1772010251629774985.jpeg'), PosixPath('.../1772010251663461208.jpeg')]
 ```
 
 Sampling:
@@ -97,13 +102,37 @@ np.float64(1772010251.6202147)
 {'arms/right_arm/qpos': array([ 0.03098021,  0.991799  , -0.16657865,  0.96951085,  0.01440866,
         0.14349142, -0.18980259,  0.08221525], dtype=float32), 'arms/left_arm/qpos': array([ 0.1032669 , -0.86291695,  0.14351352,  0.9478229 ,  0.18431091,
         0.00171096,  0.03923181,  0.11910774], dtype=float32)}
->>> [(name, image.shape) for name, image in samples[0].cameras.items()]
+>>> samples[0].cameras
+{'left_wrist': <openarm_dataset.camera.Frame object at 0x...>, 'right_wrist': <...>, 'ceiling': <...>, 'head': <...>}
+>>> [(name, frame.path) for name, frame in samples[0].cameras.items()]
+[('left_wrist', PosixPath('.../1772010251620214727.jpeg')), ('right_wrist', PosixPath('.../1772010251628789283.jpeg')), ('ceiling', PosixPath('.../1772010251629083055.jpeg')), ('head', PosixPath('.../1772010251629774985.jpeg'))]
+>>> [(name, frame.load().shape) for name, frame in samples[0].cameras.items()]
 [('left_wrist', (600, 960, 3)), ('right_wrist', (600, 960, 3)), ('ceiling', (600, 960, 3)), ('head', (600, 960, 3))]
-
->>> samples = dataset.sample(hz=30, episode_index=0)
->>> samples[0].cameras.items()
-dict_items([('left_wrist', PosixPath('1772010251620214727.jpeg')), ('right_wrist', PosixPath('1772010251628789283.jpeg')), ('ceiling', PosixPath('1772010251629083055.jpeg')), ('head', PosixPath('1772010251629774985.jpeg'))])
 ```
+
+## Convert
+
+```bash
+openarm-dataset-convert <input> <output> --format <openarm|lerobot_v2.1|eval_logger>
+```
+
+### `lerobot_v2.1`
+
+Exports to the [LeRobot v2.1](https://github.com/huggingface/lerobot) dataset
+format. Flags: `--fps` (default 30), `--smoothing-cutoff` (default 1.0),
+`--train-split` (default 0.8), `--success-only`.
+
+### `eval_logger`
+
+Exports to the [`robot_eval_logger`](https://github.com/zhouzypaul/robot_eval_logger)
+format (`<output>/<eval_id>/{metadata.json, traj_*.pkl}`), written directly
+per its `DATA_FORMAT.md`.
+
+**Single-arm only** — `robot_eval_logger` does not represent bimanual robots,
+so `--arm {left,right}` is required and the other arm's joints, gripper, and
+wrist camera are dropped. Other flags: `--fps` (default 30), `--control-mode`
+(default `joint_position`). `robot_name`, `location`, `time`, and
+`action_frequency_hz` are derived from `metadata.yaml` and the data.
 
 ## Development
 
